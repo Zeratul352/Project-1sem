@@ -1,0 +1,349 @@
+#include <windows.h>
+#include <iostream>
+#include <GL\glut.h>
+#include <cstdlib>
+#include <cmath>
+#define PI 3.14159265
+#include <cstdio>
+#include <string>
+#include <string.h>
+#include <iomanip>
+using namespace std;
+using namespace std;
+const int X_COORD = 4;// X - размерность ] должны
+const int Y_COORD = 4;// Y - размерность ] быть равными
+const float ITERATIONS = 0.0000005;// прорисовка графика (чем меньше тем лучше)
+int x_off = X_COORD / 2;// начало
+int y_off = Y_COORD / 2;// оси координат
+int accur;// have to be global
+int command;// choose between Teilor and Maclaren
+int Positive_Integer_Input(){//this function prevents errors with natural numbers input
+    char S[100];
+    char Numbers[] = "0123456789";// to cut some not needed chars
+    int number;// the result
+    while(1){
+        gets(S);
+        int flag = 0;
+        int cut = strcspn(S, Numbers);// how much symbols from the front we will cut
+        for(int i = 1; i < cut; i++){
+            S[i] = '0';
+        }
+        for(int i = 0; i < strlen(S); i++){// if there something left
+            if((S[i] - '0' > 9) || (S[i] - '0' < 0)){
+                cout << "input error" << '\n';
+                flag = 1;
+                break;
+            }
+        }
+        if(flag){
+            continue;
+        }else{
+            number = atoi(S);
+            if(number == 0){
+                continue;
+            }
+            break;
+        }
+    }
+    return number;
+}
+double UP(double a, int k){//function to power numbers correctly
+    double res;
+    res = 1;
+    for(int i = 0; i < k; i++){
+        res *= a;
+    }
+    return res;
+}
+double Count_Maclaren(double x){
+    double fx = 0;
+     for(int i = 1; i <= accur; i++){
+        fx = fx + UP(-1, i + 1) * UP(x, i) / i;
+    }
+    return fx;
+}
+//исходная функция
+#define expr x
+void drawgrid(float SERIF_OFFSET, float SERIF_DISTANCE) {
+    glBegin(GL_LINES);
+        //задаем цвета
+        glColor3f(0.0, 0.0, 0.0);
+        //рисуем координатные оси
+        //горизонталь
+        glVertex2f(0.0, Y_COORD / 2);
+        glVertex2f(X_COORD, Y_COORD / 2);
+        //засечки по горизонтали
+        int p = X_COORD / 2;
+        for(int i = X_COORD / 2; i < X_COORD; i += SERIF_DISTANCE, p -= SERIF_DISTANCE) {
+            glVertex2f(i, Y_COORD / 2);
+            glVertex2f(i, Y_COORD / 2 + SERIF_OFFSET);
+            glVertex2f(p, Y_COORD / 2);
+            glVertex2f(p, Y_COORD / 2 + SERIF_OFFSET);
+        }
+        //вертикаль
+        int t = Y_COORD / 2 ;
+        glVertex2f(X_COORD / 2, Y_COORD);
+        glVertex2f(X_COORD / 2, 0.0);
+        //засечки по вертикали
+        for(int i = Y_COORD / 2; i < Y_COORD; i += SERIF_DISTANCE, t -= SERIF_DISTANCE) {
+            glVertex2f(X_COORD / 2, i);
+            glVertex2f(Y_COORD / 2 + SERIF_OFFSET, i);
+            glVertex2f(X_COORD / 2, t);
+            glVertex2f(Y_COORD / 2 + SERIF_OFFSET, t);
+        }
+    glEnd();
+}
+void drawfunc() { // main  graphic function for Teilor
+    //рисуем график
+    glBegin(GL_POINTS);
+        float j = 0;
+        glColor3f(1, 0.0, 0.0);
+        for(float x = -X_COORD * 2; x < X_COORD * 2; x += ITERATIONS) {
+            //перерасчитываем координаты
+            j = x / (atan (x));
+            glVertex2f(x_off + x, y_off + j);//не убирать x и y!! это оффсет по осям!
+        }
+    glEnd();
+}
+void drawfunc1() { // accuracy level 1
+    //рисуем график
+    glBegin(GL_POINTS);
+        float j = 0;
+        glColor3f(0.0, 1, 0.0);
+        for(float x = -X_COORD * 2; x < X_COORD * 2; x += ITERATIONS) {
+            //перерасчитываем координаты
+            j = 1;
+            glVertex2f(x_off + x, y_off + j);//не убирать x и y!! это оффсет по осям!
+        }
+    glEnd();
+}
+void drawfunc2() { // accuracy level 2
+    //рисуем график
+    glBegin(GL_POINTS);
+        float j = 0;
+        glColor3f(0.0, 1, 0.0);
+        for(float x = -X_COORD * 2; x < X_COORD * 2; x += ITERATIONS) {
+            //перерасчитываем координаты
+            j = 1 + x * x / 3;
+            glVertex2f(x_off + x, y_off + j);//не убирать x и y!! это оффсет по осям!
+        }
+    glEnd();
+}
+void drawfunc3() { // accuracy level 3
+    //рисуем график
+    glBegin(GL_POINTS);
+        float j = 0;
+        glColor3f(0.0, 1.0, 0.0);
+        for(float x = -X_COORD * 2; x < X_COORD * 2; x += ITERATIONS) {
+            //перерасчитываем координаты
+            j = 1 + x * x / 3 - x * x * x * x * 4 / 45;
+            glVertex2f(x_off + x, y_off + j);//не убирать x и y!! это оффсет по осям!
+        }
+    glEnd();
+}
+void draw_Maclaren() { // drawing ln(1 + x)
+    //рисуем график
+    glBegin(GL_POINTS);
+        float j = 0;
+        glColor3f(1.0, 0.0, 0.0);
+        for(float x = -X_COORD * 2; x < X_COORD * 2; x += ITERATIONS) {
+            //перерасчитываем координаты
+            j = log(1 + x);
+            glVertex2f(x_off + x, y_off + j);//не убирать x и y!! это оффсет по осям!
+        }
+    glEnd();
+}
+void draw_Maclaren1() { // accuracy level 3
+    //рисуем график
+    glBegin(GL_POINTS);
+        float j = 0;
+        glColor3f(0.0, 1.0, 0.0);
+        for(float x = -X_COORD * 2; x < X_COORD * 2; x += ITERATIONS) {
+            //перерасчитываем координаты
+            j = Count_Maclaren(x);
+            glVertex2f(x_off + x, y_off + j);//не убирать x и y!! это оффсет по осям!
+        }
+    glEnd();
+}
+void display() {// this controls drawing
+    glClear(GL_COLOR_BUFFER_BIT);
+    drawgrid(0.3, 1);
+    switch(command){
+        case 1:{
+        draw_Maclaren();
+        draw_Maclaren1();
+        break;
+        }
+        case 2:{
+        drawfunc();
+        switch(accur){
+            case 1:{
+                drawfunc1();
+                break;
+            }
+            case 2:{
+                drawfunc2();
+                break;
+            }
+            case 3:{
+                drawfunc3();
+                break;
+            }
+            default:{
+                cout << "Unknown error" << '\n';
+            }
+        }
+        break;
+        }
+        default:{
+            cout << "Unknown error" << '\n';
+        }
+    }
+    //funcinfo(-5, 5);
+    glutSwapBuffers();
+    glFlush();
+}
+double Double_input(){//this function prevents errors with double numbers input, do not use to input 0
+    char S[100];
+    char Numbers[] = "0123456789-.";
+    double number;
+    while(1){
+        gets(S);
+        int flag = 0;
+        int cut = strcspn(S, Numbers);// how much symbols from the front we will cut
+        for(int i = 0; i < cut; i++){
+            S[i] = '0';
+        }
+        //cout << S << '\n';
+        cut = strspn(S, Numbers);
+        for(int i = cut; i < strlen(S); i++){
+            S[i] = '0';
+        }
+        //cout << S << '\n';
+        int minusy = 0;
+        int point = 0;
+        for(int i = 0; i < strlen(S); i++){
+            if(S[i] == '-'){
+                minusy++;
+            }else if(S[i] == '.'){
+                point ++;
+            }
+        }
+        if((point > 1) || (minusy > 1)){
+            cout << "Input error" << '\n';
+            continue;
+        }else{
+            number = atof(S);
+            if(number == 0){
+                continue;
+            }
+            break;
+        }
+    }
+    return number;
+}
+void Maclaren(){//this is function that process first part of project
+    cout << '\n';// to garantee output from a new line
+    cout << "Please set accuracy, an integer number no less than 1" << '\n';
+    accur = Positive_Integer_Input();
+    cout << "now, please , choose your interval of x" << '\n';
+    cout << "Input 1, if you want |x| < 0,1; 2 to |x| < 0,01 and 3 to |x| < 0,001"<< '\n';
+    int diapazone;
+    while(1){
+        diapazone = Positive_Integer_Input();
+        if((diapazone == 1) || (diapazone == 2) || (diapazone == 3)){
+            break;
+        }else{
+            cout <<'\n' << "Please choose correct interval" << '\n';
+        }
+    }
+    double x;
+    cout << "Now input your x, it must belong to chosen interval" << '\n';
+    while(1){
+        cin >> x;
+        if((x < -1 * UP(0.1, diapazone)) || (x > UP(0.1, diapazone))){
+            cout << "Bad input error" << '\n';
+        }else{
+            break;
+        }
+    }
+    double fx = Count_Maclaren(x);
+    cout << fixed;
+    cout << "The result is" << '\n';
+    cout << setprecision(accur + 2) << fx << '\n';
+    cout << "Approximation is :" << '\n';
+    cout << setprecision(3);
+    cout << double(1) / (accur + 1) * 10<< " * 10 ^ -" << (accur + 1) * diapazone + 1 << '\n';
+    glutDisplayFunc(display);
+}
+void Teilor(){//this function process second part of project
+    cout << "Please, choose your accuracy level, 1, 2 or 3" << '\n';
+    while(1){
+        accur = Positive_Integer_Input();
+        if((accur == 1) || (accur == 2) || (accur == 3)){
+            break;
+        }
+        cout << "uncorrect accuracy level" << '\n';
+    }
+    cout << "Now input your x" << '\n';
+    double x = Double_input();
+    cout << "The result is " << '\n';
+    cout << fixed;
+    cout << setprecision(10);
+    switch(accur){
+    case 1:
+        {
+            cout << 1 << '\n';
+            break;
+        }
+    case 2:{
+        cout << 1 + UP(x, 2) / 3;
+        break;
+    }
+    case 3:{
+        cout << 1 + UP(x, 2) / 3 - UP(x, 4) * 4 / 45;
+        break;
+    }
+    default:{
+        cout << "Unknown error" << '\n';
+    }
+    }
+    glutDisplayFunc(display);
+}
+int main(int argc, char **argv) {
+    glutInit(&argc, argv);// opengl initialisation
+    glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
+    glutInitWindowSize(600, 600);// window initialisation
+    glutInitWindowPosition(900, 100);
+    glutCreateWindow("GRAPHIC");
+    glClearColor(1.0, 1.0, 1.0, 1.0);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    //пространство координат
+    glOrtho(0.0, X_COORD, 0.0, Y_COORD, -1.0, 1.0);
+    cout << "Please input 1 to count ln(1+x)" << '\n' << "Please input 2 to count x/arctg(x)" << '\n';
+    while(1){
+        command = Positive_Integer_Input();
+        if((command == 1) || (command == 2)){
+            break;
+        }else{
+            cout << "Wrong command" << '\n';
+        }
+    }
+    switch(command){
+        case 1:{
+            Maclaren();
+            break;
+        }
+        case 2:{
+            Teilor();
+            break;
+        }
+        default:{
+            cout << "Unknown error" << '\n';
+        }
+    }
+    glutMainLoop();
+}
+
+
